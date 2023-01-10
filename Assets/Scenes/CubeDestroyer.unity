@@ -349,4 +349,4 @@ MonoBehaviour:
   _distanceToCam: 10
   _maxNumberOfObject: 10
   _spawnSpeed: 1
-  _cubeSpeed: 30
+  _cubeSpeed: 10

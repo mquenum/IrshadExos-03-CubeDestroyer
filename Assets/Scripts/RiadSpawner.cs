@@ -53,9 +53,42 @@ public class RiadSpawner : MonoBehaviour
             _objects.Add(_listFirstObject);
             _time = 0f;
         }
+        
+        // loop thru _objects list to make it all go towards the camera
         for (int i = 0; i < _objects.Count; i++)
         {
             _objects[i].transform.position = Vector3.MoveTowards(_objects[i].transform.position, Camera.main.transform.position, _cubeSpeed * Time.deltaTime);
+        }
+
+        // launch destroy on click function
+        DetectObj();
+    }
+
+    private void DetectObj()
+    {
+        // on click
+        if (Input.GetMouseButtonDown(0))
+        {
+            // raycast creation
+            Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
+            RaycastHit hit;
+
+            if (Physics.Raycast(ray, out hit))
+            {
+                // if the detected object has the "Opponent" tag
+                if (hit.collider.gameObject.CompareTag("Opponent")){
+                    // get the object detected by raycast
+                    GameObject obj = hit.collider.gameObject;
+                    // get the index of detected object in _objects 
+                    int indexOfObj = _objects.IndexOf(hit.collider.transform);
+                    // remove the detected object from the list
+                    _objects.RemoveAt(indexOfObj);
+                    // destroy the detected object
+                    Destroy(obj);
+                    // decrement the _objCounter so as opponent keeps coming at us
+                    _objCounter--;
+                }
+            }
         }
     }
 
