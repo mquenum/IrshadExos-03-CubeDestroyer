@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using static UnityEngine.GraphicsBuffer;
 using Random = UnityEngine.Random;
 
 public class Spawner : MonoBehaviour
@@ -12,6 +13,7 @@ public class Spawner : MonoBehaviour
     /*[SerializeField] float _spawnCircleRadius = 1.0f;*/
     [SerializeField] private int _maxNumberOfObject = 10;
     [SerializeField] private float _distanceFromCamera = 5.0f;
+    [SerializeField] private float _cubeSpeed = 10.0f;
 
     private List<GameObject> _objects;
     private int _counter = 0;
@@ -21,13 +23,19 @@ public class Spawner : MonoBehaviour
     void Start()
     {
         _objects = new List<GameObject>();
-        // launches function (1st parameter) at given time (2nd parameter) and relaunches it every given time
+        // launches function (1st parameter) at ²given _time (2nd parameter) and relaunches it every given _time
         // (3rd parameter, here one second divided by the number of obj by second)
         InvokeRepeating("ObjSpawn", 0.0f, _timer);
     }
 
     private void Update()
     {
+        /*for (int i = 0; i < _objects.Count; i++)
+        {
+            _objects[i].transform.position = Vector3.MoveTowards(transform.position, Camera.main.transform.position, _cubeSpeed);
+        }*/
+
+        _objects[0].transform.position = Vector3.MoveTowards(transform.position, Camera.main.transform.position, _cubeSpeed);
     }
 
     private void ObjSpawn()
@@ -77,5 +85,11 @@ public class Spawner : MonoBehaviour
             // add the newly position first object et the end of list
             _objects.Add(_firstObject);
         }
+        
+    }
+
+    private void MoveObj(GameObject obj)
+    {
+        obj.transform.position = Vector3.MoveTowards(transform.position, Camera.main.transform.position, _cubeSpeed);
     }
 }
