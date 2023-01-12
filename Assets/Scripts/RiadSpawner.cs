@@ -4,109 +4,86 @@ using UnityEngine;
 
 public class RiadSpawner : MonoBehaviour
 {
-    [SerializeField] private Transform _objectToSpawn;
-    [SerializeField] private float _distanceToCam = 10.0f;
-    [SerializeField] private int _maxNumberOfObject;
-    [SerializeField] private float _spawnSpeed = 1.0f;
-    [SerializeField] private float _cubeSpeed = 10.0f;
+    [SerializeField] private GameObject _objectToSpawn;
+    [SerializeField] private float _timer = 1.0f;
+    [SerializeField] private float _distanceFromCam = 10.0f;
+    [SerializeField] private int _numberToSpawn = 5;
 
-    private int _objCounter;
-    private Transform _listFirstObject;
-    private List<Transform> _objects = new List<Transform>();
+    private List<GameObject> _disabledObjects = new List<GameObject>();
     private float _time = 0f;
+
+    // Awake is always init even it object is disabled
+    // OnEnabled: when the object is enabled
+    // Start
+    // Update
+    // OnDiabled: when the object is disabled
+    // OnDestroyed: when obj is destroyed
 
     // Start is called before the first frame update
     void Start()
     {
+        // Creation of Pool
+        CreateObjPool(_numberToSpawn);
+    }
+
+    private void CreateObjPool(int numOfObj)
+    {
+        // create object numOfObj times
+        for (int i = 0; i < numOfObj; i++)
+        {
+            // New object
+            GameObject spawnObj = SpawnObj();
+            // disable instantiated object
+            spawnObj.SetActive(false);
+        }
+    }
+
+    private GameObject SpawnObj()
+    {
+        Vector3 position = ComputeRandomPosition();
+        GameObject obj = Instantiate(_objectToSpawn, position, Quaternion.identity);
+
+        return obj;
+    }
+
+    public void AddToPool(GameObject objToAdd)
+    {
+        _disabledObjects.Add(objToAdd);
     }
 
     // Update is called once per frame
     void Update()
     {
-        if (_spawnSpeed <= 0f) return;
-
         _time += Time.deltaTime;
 
-        if (_time >= 1f / _spawnSpeed && _objCounter < _maxNumberOfObject)
+        if (_time >= _timer)
         {
-            // On récupère l'objet qu'on fait apparaitre
-            Transform spawnedObject = Instantiate(_objectToSpawn);
-            Setup(spawnedObject);
-
-            // On l'ajoute à la pool
-            _objects.Add(spawnedObject);
-
-            // On augmente le compteur d'objet
-            _objCounter++;
             _time = 0f;
-        }
-        else if (_time >= 1f / _spawnSpeed)
-        {
-            // Quand on a atteint la limite d'objet
-            // On récupère le premier objet de la liste
-            _listFirstObject = _objects[0];
 
-            Setup(_listFirstObject);
+            // if no obj to spawn, wait until next cycle
+            if (_disabledObjects.Count == 0) return;
 
-            // On met à jour la liste
-            _objects.RemoveAt(0);
-            _objects.Add(_listFirstObject);
-            _time = 0f;
-        }
-        
-        // loop thru _objects list to make it all go towards the camera
-        for (int i = 0; i < _objects.Count; i++)
-        {
-            _objects[i].transform.position = Vector3.MoveTowards(_objects[i].transform.position, Camera.main.transform.position, _cubeSpeed * Time.deltaTime);
-        }
+            // get 1st obj from list
+            GameObject objToEnable = _disabledObjects[0];
 
-        // launch destroy on click function
-        DetectObj();
-    }
+            // set random position
+            objToEnable.transform.position = ComputeRandomPosition();
 
-    private void DetectObj()
-    {
-        // on click
-        if (Input.GetMouseButtonDown(0))
-        {
-            // raycast creation
-            Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
-            RaycastHit hit;
+            // remove from pool
+            _disabledObjects.RemoveAt(0);
 
-            if (Physics.Raycast(ray, out hit))
-            {
-                // if the detected object has the "Opponent" tag
-                if (hit.collider.gameObject.CompareTag("Opponent")){
-                    // get the object detected by raycast
-                    GameObject obj = hit.collider.gameObject;
-                    // get the index of detected object in _objects 
-                    int indexOfObj = _objects.IndexOf(hit.collider.transform);
-                    // remove the detected object from the list
-                    _objects.RemoveAt(indexOfObj);
-                    // destroy the detected object
-                    Destroy(obj);
-                    // decrement the _objCounter so as opponent keeps coming at us
-                    _objCounter--;
-                }
-            }
+            // activate the gameObject
+            objToEnable.SetActive(true);
         }
     }
 
-    private void Setup(Transform transformToSetup)
+    Vector3 ComputeRandomPosition()
     {
-        // Placer l'objet
-        Vector3 worldPosition = ComputePosition();
-        transformToSetup.position = worldPosition;
-
-        // Changer la couleur de l'objet    
-        transformToSetup.GetComponent<Renderer>().material.color = Random.ColorHSV();
-    }
-
-    private Vector3 ComputePosition()
-    {
-        Vector3 localPosition = new Vector3(Random.Range(0, Screen.width), Random.Range(0, Screen.height), _distanceToCam);
+        Vector3 localPosition = new Vector3(Random.Range(0, Screen.width), Random.Range(0, Screen.height), _distanceFromCam);
         // make the starting point of our spawn point the same as the obj (instead of 0 0 0);
-        Vector3 position = transform.TransformPoint(Camera.main.ScreenToWorldPoint(localPosition));
+        //Vector3 position = transform.TransformPoint(_cam.ScreenToWorldPoint(localPosition));
+        // cleaner way
+        Vector3 position = Camera.main.ScreenToWorldPoint(localPosition);
 
         return position;
     }
